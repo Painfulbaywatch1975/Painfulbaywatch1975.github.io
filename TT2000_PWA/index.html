@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="TT27 Rally" />
+  <meta name="theme-color" content="#0f172a" />
+  <title>TT27 Fuelled Up — Rally Tracker</title>
+
+  <link rel="manifest" href='data:application/manifest+json,{"name":"TT27 Fuelled Up Tracker","short_name":"TT27","start_url":".","display":"standalone","background_color":"#0f172a","theme_color":"#0f172a","icons":[{"src":"data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Crect width=%27100%27 height=%27100%27 rx=%2720%27 fill=%27%23ea580c%27/%3E%3Ctext x=%2750%27 y=%2765%27 font-size=%2742%27 font-family=%27sans-serif%27 font-weight=%27bold%27 fill=%27white%27 text-anchor=%27middle%27%3ETT27%3C/text%3E%3C/svg%3E","sizes":"192x192","type":"image/svg+xml"}]}' />
+
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #1e293b;
+      --card-done: #132a22;
+      --border: #334155;
+      --border-done: #10b981;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --accent: #f97316;
+      --blue: #3b82f6;
+      --green: #10b981;
+      --yellow: #f59e0b;
+      --red: #ef4444;
+    }
+
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      padding-bottom: 100px;
+    }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(15, 23, 42, 0.96);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 14px;
+    }
+
+    .top-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 1.1rem;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .badge {
+      background: var(--accent);
+      color: #fff;
+      font-size: 0.72rem;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-weight: 700;
+    }
+
+    .stats-strip {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+      margin-top: 10px;
+      text-align: center;
+    }
+
+    .stat-box {
+      background: #1e293b;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 6px 4px;
+    }
+
+    .stat-val {
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: #fff;
+    }
+
+    .stat-val.green { color: var(--green); }
+    .stat-val.accent { color: var(--accent); }
+    .stat-val.yellow { color: var(--yellow); }
+
+    .stat-lbl {
+      font-size: 0.65rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .progress-bar-wrap {
+      width: 100%;
+      height: 4px;
+      background: #1e293b;
+      margin-top: 8px;
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      height: 100%;
+      background: var(--green);
+      width: 0%;
+      transition: width 0.25s ease;
+    }
+
+    .mode-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 10px 14px;
+      background: #131c31;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.8rem;
+    }
+
+    select {
+      background: var(--card);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 6px 8px;
+      font-size: 0.82rem;
+    }
+
+    .score-details {
+      margin: 10px 14px 0;
+      background: #131c31;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 0.78rem;
+      color: #cbd5e1;
+      line-height: 1.45;
+    }
+
+    .score-details summary {
+      font-weight: 700;
+      color: var(--text);
+      cursor: pointer;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    button, .file-btn {
+      background: var(--card);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 9px 11px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+    }
+
+    button:active, .file-btn:active { opacity: 0.75; }
+    .btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .btn-blue { background: var(--blue); border-color: var(--blue); color: #fff; }
+    .btn-green { background: var(--green); border-color: var(--green); color: #05251b; }
+    .btn-danger { background: transparent; border-color: var(--red); color: var(--red); }
+
+    input[type="file"] { display: none; }
+
+    main {
+      padding: 12px 14px;
+      max-width: 760px;
+      margin: 0 auto;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px 18px;
+      color: var(--muted);
+      border: 2px dashed var(--border);
+      border-radius: 14px;
+      margin-top: 14px;
+    }
+
+    .cp-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 13px;
+      margin-bottom: 12px;
+    }
+
+    .cp-card.completed {
+      background: var(--card-done);
+      border-color: var(--border-done);
+    }
+
+    .cp-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 8px;
+    }
+
+    .cp-title-group {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      flex: 1;
+    }
+
+    .cp-checkbox {
+      width: 24px;
+      height: 24px;
+      accent-color: var(--green);
+      margin-top: 2px;
+      flex-shrink: 0;
+    }
+
+    .cp-meta-line {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.75rem;
+      margin-bottom: 3px;
+    }
+
+    .pill {
+      background: #0f172a;
+      border: 1px solid var(--border);
+      padding: 2px 7px;
+      border-radius: 999px;
+      color: #e2e8f0;
+      font-weight: 600;
+    }
+
+    .pill.pts {
+      border-color: var(--accent);
+      color: #fdba74;
+    }
+
+    .pill.pts.locked {
+      border-color: var(--yellow);
+      color: #fde047;
+    }
+
+    .pill.dist {
+      border-color: var(--blue);
+      color: #93c5fd;
+    }
+
+    .cp-name {
+      margin: 0;
+      font-size: 1.02rem;
+      font-weight: 700;
+    }
+
+    .cp-card.completed .cp-name {
+      text-decoration: line-through;
+      color: var(--muted);
+    }
+
+    .cp-coords {
+      font-size: 0.74rem;
+      color: var(--muted);
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      margin-top: 2px;
+    }
+
+    .reorder-controls {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .reorder-controls button {
+      padding: 5px 9px;
+      background: #0f172a;
+    }
+
+    .cp-notes {
+      margin: 9px 0;
+      padding: 9px 10px;
+      background: rgba(15, 23, 42, 0.65);
+      border-radius: 8px;
+      font-size: 0.85rem;
+      line-height: 1.4;
+      white-space: pre-wrap;
+    }
+
+    .image-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 8px;
+      margin: 8px 0;
+    }
+
+    .img-box {
+      background: #0f172a;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 5px;
+      text-align: center;
+    }
+
+    .img-box span {
+      display: block;
+      font-size: 0.68rem;
+      color: var(--muted);
+      margin-bottom: 3px;
+    }
+
+    .img-box img {
+      width: 100%;
+      max-height: 130px;
+      object-fit: cover;
+      border-radius: 6px;
+    }
+
+    .cp-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .full-width { grid-column: span 2; }
+
+    .cp-meta-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid rgba(51, 65, 85, 0.5);
+    }
+
+    .cp-meta-actions button { padding: 5px 9px; font-size: 0.74rem; }
+
+    .modal-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.78);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      padding: 14px;
+    }
+
+    .modal-backdrop.active { display: flex; }
+
+    .modal {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      width: 100%;
+      max-width: 500px;
+      padding: 16px;
+      max-height: 92vh;
+      overflow-y: auto;
+    }
+
+    .form-group { margin-bottom: 11px; }
+    .form-group label {
+      display: block;
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-bottom: 4px;
+      font-weight: 600;
+    }
+
+    .form-group input[type="text"],
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      background: #0f172a;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 9px;
+      color: var(--text);
+      font-size: 0.9rem;
+      font-family: inherit;
+    }
+
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .lightbox {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.92);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .lightbox.active { display: flex; }
+    .lightbox img { max-width: 100%; max-height: 90vh; border-radius: 8px; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="top-row">
+      <h1>🏍️ TT27 Fuelled Up <span class="badge" id="cp-count-badge">0/0</span></h1>
+      <button class="btn-primary" onclick="openModal()">+ Add Stop</button>
+    </div>
+
+    <div class="stats-strip">
+      <div class="stat-box">
+        <div class="stat-val accent" id="stat-points">0</div>
+        <div class="stat-lbl">Ord. Pts (Cap 5k)</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-val yellow" id="stat-sp">+0 SP</div>
+        <div class="stat-lbl">Special Pts</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-val green" id="stat-done-km">0 km</div>
+        <div class="stat-lbl">Done (Crow-Flies)</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-val" id="stat-total-km">0 km</div>
+        <div class="stat-lbl">Route (Crow-Flies)</div>
+      </div>
+    </div>
+
+    <div class="progress-bar-wrap"><div class="progress-bar" id="progress-bar"></div></div>
+  </header>
+
+  <div class="mode-bar">
+    <div>
+      <label for="pathway-select"><strong>Pathway:</strong> </label>
+      <select id="pathway-select" onchange="changePathway(this.value)">
+        <option value="si_pump">SI Pump Hunt</option>
+        <option value="ni_pump">NI Northern Pump Hunt</option>
+        <option value="si_full_tank">SI Full Tank Tour (20 stops)</option>
+        <option value="si_exact_2000">SI Exactly 2,000 km Challenge</option>
+      </select>
+    </div>
+    <div id="tta-status" style="font-size:0.75rem; color: var(--green);">✓ TTA Eligible</div>
+  </div>
+
+  <div class="toolbar">
+    <label class="file-btn">
+      📥 Import KML
+      <input type="file" id="kml-input" accept=".kml,.xml" onchange="handleKMLImport(event)" />
+    </label>
+    <button onclick="exportJSON()">📤 Share Route</button>
+    <label class="file-btn">
+      📂 Load Route
+      <input type="file" id="json-input" accept=".json" onchange="handleJSONImport(event)" />
+    </label>
+    <button class="btn-danger" onclick="clearAllCheckpoints()">🗑️ Clear</button>
+  </div>
+
+  <details class="score-details" open>
+    <summary>📊 TT27 Scoring & Distance Breakdown (Completed Stops)</summary>
+    <div id="score-breakdown-text" style="margin-top:6px;">Complete checkpoints to calculate bonuses, provider locks, and distances.</div>
+    <div style="margin-top:6px; color:var(--muted); font-size:0.72rem;">
+      * Distances are straight-line Haversine km between consecutive stops (actual NZ road km will be higher). Target: ≥ 2,000 km & ≥ 2,000 pts within 48 hrs.
+    </div>
+  </details>
+
+  <main id="checkpoint-list"></main>
+
+  <!-- Add / Edit Checkpoint Modal -->
+  <div class="modal-backdrop" id="cp-modal">
+    <div class="modal">
+      <h2 id="modal-title" style="margin-top:0;">Add Checkpoint</h2>
+      <input type="hidden" id="edit-id" />
+
+      <div class="form-group">
+        <label>Checkpoint Type</label>
+        <select id="cp-type-input">
+          <option value="fuel">Fuel Station (50 / 25 pts)</option>
+          <option value="mystery">Mystery Checkpoint (100 pts, SI only)</option>
+          <option value="compass">Compass Point (100 pts, N/S/E/W extreme)</option>
+          <option value="ghost">Ghost Station (100 pts, max 4)</option>
+          <option value="full_tank">Full Tank Tour Stop (Compulsory SI)</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Checkpoint Name *</label>
+        <input type="text" id="cp-name-input" placeholder="e.g., Z Rangiora or Fairlie Bakehouse" />
+      </div>
+
+      <div class="form-group">
+        <label>Fuel Provider (for Five of a Kind & Locking)</label>
+        <input type="text" id="cp-provider-input" list="provider-list" placeholder="e.g., Z, BP, Gull, NPD, Mobil, Waitomo" />
+        <datalist id="provider-list">
+          <option value="Z"></option>
+          <option value="BP"></option>
+          <option value="Gull"></option>
+          <option value="NPD"></option>
+          <option value="Mobil"></option>
+          <option value="Waitomo"></option>
+          <option value="Allied"></option>
+          <option value="Challenge"></option>
+          <option value="McFall Fuel"></option>
+          <option value="RD Petroleum"></option>
+        </datalist>
+      </div>
+
+      <div class="form-group">
+        <label>Scoring Region</label>
+        <select id="cp-region-input">
+          <optgroup label="South Island Regions">
+            <option value="Tasman and Nelson">Tasman and Nelson</option>
+            <option value="Marlborough">Marlborough</option>
+            <option value="Canterbury">Canterbury</option>
+            <option value="West Coast">West Coast</option>
+            <option value="Otago">Otago</option>
+            <option value="Southland">Southland</option>
+          </optgroup>
+          <optgroup label="North Island Regions">
+            <option value="Northland">Northland</option>
+            <option value="Auckland">Auckland</option>
+            <option value="Waikato and Bay of Plenty">Waikato and Bay of Plenty</option>
+            <option value="Gisborne and Hawke's Bay">Gisborne and Hawke's Bay</option>
+            <option value="Taranaki and Manawatū-Whanganui">Taranaki and Manawatū-Whanganui</option>
+            <option value="Wellington and Wairarapa">Wellington and Wairarapa</option>
+          </optgroup>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Coordinates (Lat, Lng) *</label>
+        <input type="text" id="cp-coords-input" placeholder="-43.3033, 172.5967" />
+      </div>
+
+      <div class="form-group">
+        <label>Photo Evidence / Clue Notes</label>
+        <textarea id="cp-notes-input" placeholder="e.g., Bike + rally number visible, or selfie with helmet off in TT27 tee for Ghost Station."></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>Reference Clue Image (Optional)</label>
+        <input type="file" id="cp-ref-img-input" accept="image/*" style="display:block; color:var(--muted); font-size:0.8rem;" />
+      </div>
+
+      <div class="modal-footer">
+        <button onclick="closeModal()">Cancel</button>
+        <button class="btn-primary" onclick="saveCheckpointFromModal()">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="lightbox" id="lightbox" onclick="this.classList.remove('active')">
+    <img id="lightbox-img" src="" alt="Preview" />
+  </div>
+
+  <script>
+    const DB_NAME = 'TT27RallyDB';
+    const STORE_NAME = 'checkpoints';
+    let db;
+    let checkpoints = [];
+    let pathway = localStorage.getItem('tt27_pathway') || 'si_pump';
+    document.getElementById('pathway-select').value = pathway;
+
+    function initDB() {
+      return new Promise((resolve, reject) => {
+        const req = indexedDB.open(DB_NAME, 1);
+        req.onupgradeneeded = (e) => {
+          const d = e.target.result;
+          if (!d.objectStoreNames.contains(STORE_NAME)) {
+            d.createObjectStore(STORE_NAME, { keyPath: 'id' });
+          }
+        };
+        req.onsuccess = (e) => { db = e.target.result; resolve(db); };
+        req.onerror = (e) => reject(e.target.error);
+      });
+    }
+
+    async function loadCheckpoints() {
+      return new Promise((resolve) => {
+        const tx = db.transaction(STORE_NAME, 'readonly');
+        const req = tx.objectStore(STORE_NAME).getAll();
+        req.onsuccess = () => {
+          checkpoints = (req.result || []).sort((a, b) => a.order - b.order);
+          renderAll();
+          resolve();
+        };
+      });
+    }
+
+    async function saveAllToDB() {
+      return new Promise((resolve) => {
+        const tx = db.transaction(STORE_NAME, 'readwrite');
+        const store = tx.objectStore(STORE_NAME);
+        store.clear().onsuccess = () => {
+          checkpoints.forEach((cp, idx) => {
